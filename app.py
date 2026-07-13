@@ -5,14 +5,12 @@ from io import BytesIO
 import logging
 
 # ================= CONFIG =================
-BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ See  at bottom of chat — regenerate this token via @BotFather since it was shared in plain text.
+BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ Token shared in plain text - Regenerate via @BotFather if needed.
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # ========= API LINKS =========
 INFO_API = "https://nirob-x-info.vercel.app/info?uid={uid}"
 OUTFIT_API = "https://nirob-free-fire-outfit.vercel.app/get?uid={uid}"
-# NOTE: this must be a DIRECT image URL (ending in .jpg/.png), not a freeimage.host
-# "viewer" page link, or the download below will just get an HTML page.
 WELCOME_IMAGE = "https://freeimage.host/i/C07A0Cu"
 
 TELEGRAM_MAX_LEN = 4096
@@ -23,14 +21,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # ========= SAFE GET HELPER =========
 def safe_str(value, default="N/A"):
-    """Return default if value is None/missing, otherwise str(value)."""
     if value is None or value == "":
         return default
     return str(value)
 
 
 def safe_replace(value, prefix, default="N/A"):
-    """Safely strip a prefix like 'Language_' without crashing on None."""
     if value is None:
         return default
     return str(value).replace(prefix, "")
@@ -59,7 +55,6 @@ def format_player_info(data, uid):
     social = data.get("socialInfo") or {}
     credit = data.get("creditScoreInfo") or {}
     diamond = data.get("diamondCostRes") or {}
-    external = basic.get("externalIconInfo") or {}
 
     skills = profile.get("equipedSkills") or []
     weapons = basic.get("weaponSkinShows") or []
@@ -89,100 +84,90 @@ def format_player_info(data, uid):
 
     text = f"""
 ╔══════════════════════════════════════╗
-║   🔥🎮 PLAYER INFORMATION 🎮🔥   ║
+║    🔥🎮 PLAYER INFORMATION 🎮🔥     ║
 ╚══════════════════════════════════════╝
 
-👤 BASIC INFO
+👤 BASIC PROFILE
 ├─ Nickname: {nickname}
 ├─ UID: {uid}
 ├─ Region: {safe_str(basic.get('region'))}
 ├─ Account Type: {'Normal' if basic.get('accountType') == 1 else 'Guest'}
 ├─ Level: {safe_str(basic.get('level'))}
 ├─ Experience: {basic.get('exp', 0) or 0:,}
-├─ Likes: {basic.get('liked', 0) or 0:,}
+├─ Total Likes: {basic.get('liked', 0) or 0:,}
 ├─ Account Age: {account_age}
-├─ Version: {safe_str(basic.get('releaseVersion'), 'OB')}
-└─ Created: {convert_time(basic.get('createAt'))}
+├─ Game Version: {safe_str(basic.get('releaseVersion'), 'OB')}
+└─ Created At: {convert_time(basic.get('createAt'))}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏆 RANK INFORMATION
-├─ BR Rank: {safe_str(basic.get('rank'))} ({br_rank})
-├─ BR Points: {basic.get('rankingPoints', 0) or 0:,}
+🏆 RANK STATUS
+├─ BR Rank: {br_rank} (Code: {safe_str(basic.get('rank'))})
+├─ BR Rank Points: {basic.get('rankingPoints', 0) or 0:,}
 ├─ Max BR Rank: {safe_str(basic.get('maxRank'))}
-├─ CS Rank: {safe_str(basic.get('csRank'))} ({cs_rank})
-├─ CS Points: {basic.get('csRankingPoints', 0) or 0:,}
+├─ CS Rank: {cs_rank} (Code: {safe_str(basic.get('csRank'))})
+├─ CS Rank Points: {basic.get('csRankingPoints', 0) or 0:,}
 └─ Max CS Rank: {safe_str(basic.get('csMaxRank'))}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧩 PROFILE INFORMATION
+🧩 CUSTOMIZATION & ITEMS
 ├─ Avatar ID: {safe_str(profile.get('avatarId'))}
 ├─ Banner ID: {safe_str(basic.get('bannerId'))}
 ├─ Head Pic: {safe_str(basic.get('headPic'))}
 ├─ Badge ID: {safe_str(basic.get('badgeId'))}
-├─ Title ID: {safe_str(basic.get('title'))}
+├─ Equipped Title: {safe_str(basic.get('title'))}
 ├─ Pin ID: {safe_str(basic.get('pinId'))}
-├─ Game Bag: {safe_str(basic.get('gameBagShow'))}
+├─ Game Bag Show: {safe_str(basic.get('gameBagShow'))}
 ├─ Season ID: {safe_str(basic.get('seasonId'))}
-├─ Marked Star: {'Yes' if profile.get('isMarkedStar') else 'No'}
+├─ Star Player: {'Yes' if profile.get('isMarkedStar') else 'No'}
 ├─ PVE Weapon: {safe_str(profile.get('pvePrimaryWeapon'))}
-├─ End Time: {convert_time(profile.get('endTime'))}
-├─ Skills: {', '.join(map(str, skills)) if skills else 'None'}
-├─ Weapons: {', '.join(map(str, weapons)) if weapons else 'None'}
-└─ Clothes: {', '.join(map(str, clothes)) if clothes else 'None'}
+├─ Equipped Skills: {', '.join(map(str, skills)) if skills else 'None'}
+├─ Weapon Skins: {', '.join(map(str, weapons)) if weapons else 'None'}
+└─ Outfits (IDs): {', '.join(map(str, clothes)) if clothes else 'None'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏰 CLAN INFORMATION
+🏰 CLAN DETAILS
 ├─ Clan Name: {safe_str(clan.get('clanName'), 'No Clan')}
 ├─ Clan ID: {safe_str(clan.get('clanId'))}
 ├─ Clan Level: {safe_str(clan.get('clanLevel'))}
 ├─ Members: {clan.get('memberNum', 0) or 0} / {clan.get('capacity', 0) or 0}
-├─ Captain ID: {safe_str(captain.get('accountId'))}
-├─ Captain Name: {safe_str(captain.get('nickname'))}
-├─ Captain Level: {safe_str(captain.get('level'))}
-├─ Captain Likes: {captain.get('liked', 0) or 0:,}
-└─ Captain Region: {safe_str(captain.get('region'))}
+├─ Leader UID: {safe_str(captain.get('accountId'))}
+├─ Leader Name: {safe_str(captain.get('nickname'))}
+├─ Leader Level: {safe_str(captain.get('level'))}
+├─ Leader Likes: {captain.get('liked', 0) or 0:,}
+└─ Leader Region: {safe_str(captain.get('region'))}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🐾 PET INFORMATION
+🐾 COMPANION (PET)
 ├─ Pet ID: {safe_str(pet.get('id'))}
 ├─ Pet Level: {safe_str(pet.get('level'))}
 ├─ Pet EXP: {safe_str(pet.get('exp'), '0')}
 ├─ Skin ID: {safe_str(pet.get('skinId'))}
-├─ Skill ID: {safe_str(pet.get('selectedSkillId'))}
-└─ Selected: {'Yes' if pet.get('isSelected') else 'No'}
+├─ Selected Skill: {safe_str(pet.get('selectedSkillId'))}
+└─ Is Equipped: {'Yes' if pet.get('isSelected') else 'No'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💬 SOCIAL INFORMATION
-├─ Language: {safe_replace(social.get('language'), 'Language_', 'EN')}
+💬 SOCIAL PROFILE
+├─ Bio Language: {safe_replace(social.get('language'), 'Language_', 'EN')}
 ├─ Active Time: {safe_replace(social.get('timeActive'), 'TimeActive_', 'DAY')}
 ├─ Signature: {safe_str(social.get('signature'), 'No Signature')}
-└─ Rank Show: {safe_replace(social.get('rankShow'), 'RankShow_', 'BR')}
+└─ Pref. Rank Mode: {safe_replace(social.get('rankShow'), 'RankShow_', 'BR')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔮 EXTERNAL ICON
-├─ Status: {safe_replace(external.get('status'), 'ExternalIconStatus_')}
-└─ Show Type: {safe_replace(external.get('showType'), 'ExternalIconShowType_')}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💰 ACCOUNT INFORMATION
+💰 SYSTEM ECONOMY & TIMELINE
 ├─ Credit Score: {safe_str(credit.get('creditScore'), '100')}/100
-├─ Diamond Cost: {safe_str(diamond.get('diamondCost'))} 💎
-└─ Period End: {convert_time(credit.get('periodicSummaryEndTime'))}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 TIMELINE
-├─ Created: {convert_time(basic.get('createAt'))}
-└─ Last Login: {convert_time(basic.get('lastLoginAt'))}
+├─ Est. Diamond Cost: {safe_str(diamond.get('diamondCost'))} 💎
+├─ Last Login Time: {convert_time(basic.get('lastLoginAt'))}
+└─ History Period End: {convert_time(credit.get('periodicSummaryEndTime'))}
 
 ╔══════════════════════════════════════╗
-║  🛡️ Dev: NIROB  |  💻 @MT_0G  ║
+║ 💻 Dev: Developer Habib 69           ║
+║ 🛡️ Support: @DeveloperHabib69        ║
 ╚══════════════════════════════════════╝
 """
     return text
 
 
 def send_long_message(chat_id, text, reply_to_message_id=None):
-    """Telegram caps messages at 4096 chars. Split safely on line breaks if needed."""
     if len(text) <= TELEGRAM_MAX_LEN:
         bot.send_message(chat_id, text, reply_to_message_id=reply_to_message_id)
         return
@@ -229,22 +214,22 @@ def start_command(message):
         welcome_text = f"""
 ✨ WELCOME {user_name.upper()} ✨
 
-🤖 NIROB FF INFO BOT
-👨‍💻 Dev: NIROB | 🛡️ @MT_0G
+🤖 DEVELOPER HABIB 69 FF INFO BOT
+👨‍💻 Owner: Developer Habib 69 | 🛡️ Support: @DeveloperHabib69
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 QUICK COMMAND
 
-/info YOUR_UID
+🚀 Use `/info <UID>` to fetch data.
 
 📝 Example:
-/info 9097982134
+`/info 9097982134`
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 Get Full Free Fire Player Info!
+🎯 Get Real-time Free Fire Player Statistics & Outfits!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💡 Use /help for more commands
+💡 Need help? Type /help anytime.
 """
         try:
             image_response = requests.get(WELCOME_IMAGE, timeout=15)
@@ -268,28 +253,27 @@ def start_command(message):
 @bot.message_handler(commands=['help'])
 def help_command(message):
     text = """
-📖 COMMAND GUIDE
+📖 BOT COMMAND GUIDE
 
-/info <uid> - Get player info
-/outfit <uid> - Get outfit image
-/start - Welcome message
-/help - Show this guide
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 WHAT YOU GET
-
-✅ Player Basic Info
-✅ Rank Details (BR & CS)
-✅ Clan Information
-✅ Pet Details
-✅ Social Information
-✅ Account Timeline
-✅ Credit & Diamond Info
-✅ Outfit Image
+⚡ /info <uid> - Fetch comprehensive player stats
+👕 /outfit <uid> - Get an instant outfit preview avatar
+🔄 /start - Relaunch welcome dashboard
+❓ /help - Open this documentation guide
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💻 Developer: NIROB
-🛡️ Support: @MT_0G
+📊 EXTRACTED DATA INCLUDES:
+
+✅ Basic Profile & Account Age
+✅ Current Rank Tiers (BR & CS Modes)
+✅ Active Clan Info & Leader Details
+✅ Pet Equipped Stats
+✅ Custom Bio Signatures
+✅ Real-time Credit Score & Diamond History
+✅ Virtual Outfit Rendering
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💻 Maintained by: Developer Habib 69
+🛡️ Tech Support: @DeveloperHabib69
 """
     bot.reply_to(message, text)
 
@@ -299,32 +283,32 @@ def help_command(message):
 def info_command(message):
     parts = message.text.split()
     if len(parts) < 2:
-        bot.reply_to(message, "❌ Use: /info <UID>\nExample: /info 9097982134")
+        bot.reply_to(message, "❌ Syntax Error!\nUse: `/info <UID>`\nExample: `/info 9097982134`")
         return
 
     uid = parts[1].strip()
     if not uid.isdigit():
-        bot.reply_to(message, "❌ Invalid UID! Please enter only numbers.")
+        bot.reply_to(message, "❌ Access Denied! UID must contain numbers only.")
         return
 
-    processing = bot.reply_to(message, f"⏳ Fetching player info for UID {uid}...")
+    processing = bot.reply_to(message, f"⏳ Accessing database... Fetching profile for UID {uid}...")
 
     try:
         url = INFO_API.format(uid=uid)
         response = requests.get(url, timeout=30)
 
         if response.status_code != 200:
-            safe_edit_message("❌ API Error! Please try again later.", message.chat.id, processing.message_id)
+            safe_edit_message("❌ Database API error. Please try again in a few moments.", message.chat.id, processing.message_id)
             return
 
         try:
             data = response.json()
         except ValueError:
-            safe_edit_message("❌ API returned invalid data. Please try again later.", message.chat.id, processing.message_id)
+            safe_edit_message("❌ API parsed empty or invalid json structural response.", message.chat.id, processing.message_id)
             return
 
         if not isinstance(data, dict) or "basicInfo" not in data:
-            safe_edit_message("❌ Player not found! Please check the UID.", message.chat.id, processing.message_id)
+            safe_edit_message("❌ Player ID not found. Verify the Free Fire UID and re-try.", message.chat.id, processing.message_id)
             return
 
         formatted_text = format_player_info(data, uid)
@@ -343,15 +327,15 @@ def info_command(message):
                 bot.send_photo(
                     message.chat.id,
                     photo,
-                    caption=f"👕 Outfit Preview\n🎮 {nickname} | 🆔 {uid}",
+                    caption=f"👕 Outfit Rendered\n🎮 {nickname} | 🆔 {uid}",
                     reply_to_message_id=message.message_id
                 )
         except Exception as e:
-            logging.warning(f"Outfit fetch failed for uid {uid}: {e}")
+            logging.warning(f"Outfit auto-fetch omitted/failed for uid {uid}: {e}")
 
     except Exception as e:
-        logging.error(f"Info command error: {e}")
-        safe_edit_message(f"❌ Error: {str(e)}", message.chat.id, processing.message_id)
+        logging.error(f"Info command critical error: {e}")
+        safe_edit_message(f"❌ Internal System Error: {str(e)}", message.chat.id, processing.message_id)
 
 
 # ================= OUTFIT COMMAND =================
@@ -359,22 +343,22 @@ def info_command(message):
 def outfit_command(message):
     parts = message.text.split()
     if len(parts) < 2:
-        bot.reply_to(message, "❌ Use: /outfit <UID>\nExample: /outfit 9097982134")
+        bot.reply_to(message, "❌ Syntax Error!\nUse: `/outfit <UID>`\nExample: `/outfit 9097982134`")
         return
 
     uid = parts[1].strip()
     if not uid.isdigit():
-        bot.reply_to(message, "❌ Invalid UID! Please enter only numbers.")
+        bot.reply_to(message, "❌ Access Denied! UID must contain numbers only.")
         return
 
-    processing = bot.reply_to(message, f"⏳ Generating outfit image for UID {uid}...")
+    processing = bot.reply_to(message, f"⏳ Rendering player avatar cosmetics for UID {uid}...")
 
     try:
         outfit_url = OUTFIT_API.format(uid=uid)
         response = requests.get(outfit_url, timeout=30)
 
         if response.status_code != 200:
-            safe_edit_message("❌ Outfit image not available!", message.chat.id, processing.message_id)
+            safe_edit_message("❌ Custom skin compilation failed or asset server offline.", message.chat.id, processing.message_id)
             return
 
         photo = BytesIO(response.content)
@@ -384,28 +368,26 @@ def outfit_command(message):
         bot.send_photo(
             message.chat.id,
             photo,
-            caption=f"👕 Outfit Preview\n🆔 UID: {uid}",
+            caption=f"👕 Outfit Preview Model\n🆔 UID Account Reference: {uid}",
             reply_to_message_id=message.message_id
         )
 
     except Exception as e:
-        logging.error(f"Outfit command error: {e}")
-        safe_edit_message(f"❌ Error: {str(e)}", message.chat.id, processing.message_id)
+        logging.error(f"Outfit interface error: {e}")
+        safe_edit_message(f"❌ Execution Fault: {str(e)}", message.chat.id, processing.message_id)
 
 
-# ================= MAIN =================
+# ================= MAIN RUNNER =================
 if __name__ == "__main__":
     print("=" * 50)
-    print("🤖 NIROB PLAYER INFO BOT")
-    print("💻 Developer: NIROB")
-    print("🛡️ Support: @MT_0G")
+    print("🤖 DEVELOPER HABIB 69 PLAYER INFO BOT SYSTEM")
+    print("💻 Dev Studio: Developer Habib 69")
+    print("🛡️ Contact: @DeveloperHabib69")
     print("=" * 50)
-    print("✅ INFO API: https://nirob-x-info.vercel.app/info")
-    print("✅ OUTFIT API: https://nirob-free-fire-outfit.vercel.app/get")
-    print("🤖 Bot is running...")
+    print("🤖 Bot Engine Deployment Active...")
     print("=" * 50)
 
     try:
         bot.infinity_polling()
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Polling Crash: {e}")
