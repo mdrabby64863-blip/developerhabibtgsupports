@@ -3,10 +3,18 @@ import requests
 from datetime import datetime
 from io import BytesIO
 import logging
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # ================= CONFIG =================
-BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ Token shared in plain text - Regenerate via @BotFather if needed.
+BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ Token shared in plain text
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# 📢 FORCE JOIN CHANNELS CONFIG (এখানে আপনার চ্যানেল/গ্রুপের আইডি বা ইউজারনেম দিন)
+CHANNEL_1_ID = "@TestAdminBotS"   # উদাহরণ: "@my_main_channel" অথবা ID -100xxxxxxxxx
+CHANNEL_2_ID = "@asdasdsa11c"   # উদাহরণ: "@my_sub_channel" অথবা ID -100xxxxxxxxx
+
+CHANNEL_1_LINK = "https://t.me/TestAdminBotS"  # বাটন ১ এর লিঙ্ক
+CHANNEL_2_LINK = "https://t.me/asdasdsa11c"  # বাটন ২ এর লিঙ্ক
 
 # ========= API LINKS =========
 INFO_API = "https://nirob-x-info.vercel.app/info?uid={uid}"
@@ -17,6 +25,45 @@ TELEGRAM_MAX_LEN = 4096
 
 # ========= LOGGING =========
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+# ========= CHECK JOIN FUNCTION =========
+def is_user_joined(user_id):
+    """ইউজার দুটি চ্যানেলে জয়েন আছে কিনা চেক করার ফাংশন"""
+    try:
+        # চ্যানেল ১ চেক
+        member1 = bot.get_chat_member(CHANNEL_1_ID, user_id)
+        # চ্যানেল ২ চেক
+        member2 = bot.get_chat_member(CHANNEL_2_ID, user_id)
+        
+        # লেফট, কিকড বা রেস্ট্রিক্টেড না হলে সে মেম্বার
+        valid_statuses = ['member', 'administrator', 'creator']
+        if member1.status in valid_statuses and member2.status in valid_statuses:
+            return True
+        return False
+    except Exception as e:
+        logging.error(f"Error checking channel membership: {e}")
+        # বট অ্যাডমিন না থাকলে বা কোনো সমস্যা হলে সেফ সাইড হিসেবে True রিটার্ন করতে পারেন, 
+        # তবে সঠিকভাবে সেটআপ করলে এটি ঠিকঠাক কাজ করবে।
+        return False
+
+
+# ========= FORCE JOIN KEYBOARD =========
+def get_join_keyboard(uid, command_type="info"):
+    """ইউজার জয়েন না থাকলে ২টা চ্যানেল এবং ১টা ভেরিফাই বাটন শো করার কিবোর্ড"""
+    markup = InlineKeyboardMarkup(row_width=2)
+    
+    # প্রথম লাইনে ২টি চ্যানেলের বাটন পাশাপাশি (আপনার দেওয়া ছবির মতো)
+    btn1 = InlineKeyboardButton("📢 JOIN GROUP 1", url=CHANNEL_1_LINK)
+    btn2 = InlineKeyboardButton("📢 JOIN GROUP 2", url=CHANNEL_2_LINK)
+    markup.row(btn1, btn2)
+    
+    # দ্বিতীয় লাইনে বড় ভেরিফাই বাটন (Callback Data সহ যাতে পরে চেক করা যায়)
+    # ডাটা ফরম্যাট: verify_কমান্ড_ইউআইডি
+    verify_btn = InlineKeyboardButton("✅ VERIFY", callback_data=f"verify_{command_type}_{uid}")
+    markup.row(verify_btn)
+    
+    return markup
 
 
 # ========= SAFE GET HELPER =========
@@ -83,9 +130,9 @@ def format_player_info(data, uid):
     nickname = safe_str(basic.get('nickname'))
 
     text = f"""
-╔══════════════════════════════════════╗
-║    🔥🎮 PLAYER INFORMATION 🎮🔥     ║
-╚══════════════════════════════════════╝
+╔═════════════════════╗
+║  PLAYER INFORMATION ║
+╚═════════════════════╝
 
 👤 BASIC PROFILE
 ├─ Nickname: {nickname}
@@ -99,7 +146,7 @@ def format_player_info(data, uid):
 ├─ Game Version: {safe_str(basic.get('releaseVersion'), 'OB')}
 └─ Created At: {convert_time(basic.get('createAt'))}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 🏆 RANK STATUS
 ├─ BR Rank: {br_rank} (Code: {safe_str(basic.get('rank'))})
 ├─ BR Rank Points: {basic.get('rankingPoints', 0) or 0:,}
@@ -108,7 +155,7 @@ def format_player_info(data, uid):
 ├─ CS Rank Points: {basic.get('csRankingPoints', 0) or 0:,}
 └─ Max CS Rank: {safe_str(basic.get('csMaxRank'))}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 🧩 CUSTOMIZATION & ITEMS
 ├─ Avatar ID: {safe_str(profile.get('avatarId'))}
 ├─ Banner ID: {safe_str(basic.get('bannerId'))}
@@ -124,7 +171,7 @@ def format_player_info(data, uid):
 ├─ Weapon Skins: {', '.join(map(str, weapons)) if weapons else 'None'}
 └─ Outfits (IDs): {', '.join(map(str, clothes)) if clothes else 'None'}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 🏰 CLAN DETAILS
 ├─ Clan Name: {safe_str(clan.get('clanName'), 'No Clan')}
 ├─ Clan ID: {safe_str(clan.get('clanId'))}
@@ -136,7 +183,7 @@ def format_player_info(data, uid):
 ├─ Leader Likes: {captain.get('liked', 0) or 0:,}
 └─ Leader Region: {safe_str(captain.get('region'))}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 🐾 COMPANION (PET)
 ├─ Pet ID: {safe_str(pet.get('id'))}
 ├─ Pet Level: {safe_str(pet.get('level'))}
@@ -145,24 +192,24 @@ def format_player_info(data, uid):
 ├─ Selected Skill: {safe_str(pet.get('selectedSkillId'))}
 └─ Is Equipped: {'Yes' if pet.get('isSelected') else 'No'}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 💬 SOCIAL PROFILE
 ├─ Bio Language: {safe_replace(social.get('language'), 'Language_', 'EN')}
 ├─ Active Time: {safe_replace(social.get('timeActive'), 'TimeActive_', 'DAY')}
 ├─ Signature: {safe_str(social.get('signature'), 'No Signature')}
 └─ Pref. Rank Mode: {safe_replace(social.get('rankShow'), 'RankShow_', 'BR')}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 💰 SYSTEM ECONOMY & TIMELINE
 ├─ Credit Score: {safe_str(credit.get('creditScore'), '100')}/100
 ├─ Est. Diamond Cost: {safe_str(diamond.get('diamondCost'))} 💎
 ├─ Last Login Time: {convert_time(basic.get('lastLoginAt'))}
 └─ History Period End: {convert_time(credit.get('periodicSummaryEndTime'))}
 
-╔══════════════════════════════════════╗
-║ 💻 Dev: Developer Habib 69           ║
-║ 🛡️ Support: @DeveloperHabib69        ║
-╚══════════════════════════════════════╝
+╔═════════════════════════════╗
+║ Build : Developer Habib 69  ║
+║ Support : @DeveloperHabib69 ║
+╚═════════════════════════════╝
 """
     return text
 
@@ -205,6 +252,82 @@ def safe_edit_message(text, chat_id, message_id):
             logging.error(f"Could not send fallback message either: {e2}")
 
 
+# ================= EXECUTE ACTIONS (CORE LOGIC) =================
+def execute_info_search(chat_id, user_id, uid, reply_to_message_id=None):
+    """প্লেয়ারের ইনফো খোঁজার মূল প্রসেস"""
+    processing = bot.send_message(chat_id, f"⏳ Accessing database... Fetching profile for UID {uid}...", reply_to_message_id=reply_to_message_id)
+    try:
+        url = INFO_API.format(uid=uid)
+        response = requests.get(url, timeout=30)
+
+        if response.status_code != 200:
+            safe_edit_message("❌ Database API error. Please try again in a few moments.", chat_id, processing.message_id)
+            return
+
+        try:
+            data = response.json()
+        except ValueError:
+            safe_edit_message("❌ API parsed empty or invalid json structural response.", chat_id, processing.message_id)
+            return
+
+        if not isinstance(data, dict) or "basicInfo" not in data:
+            safe_edit_message("❌ Player ID not found. Verify the Free Fire UID and re-try.", chat_id, processing.message_id)
+            return
+
+        formatted_text = format_player_info(data, uid)
+
+        safe_delete_message(chat_id, processing.message_id)
+        send_long_message(chat_id, formatted_text, reply_to_message_id=reply_to_message_id)
+
+        try:
+            outfit_url = OUTFIT_API.format(uid=uid)
+            outfit_response = requests.get(outfit_url, timeout=30)
+
+            if outfit_response.status_code == 200:
+                photo = BytesIO(outfit_response.content)
+                photo.name = "outfit.png"
+                nickname = (data.get("basicInfo") or {}).get("nickname", "Unknown")
+                bot.send_photo(
+                    chat_id,
+                    photo,
+                    caption=f"👕 Outfit Rendered\n🎮 {nickname} | 🆔 {uid}",
+                    reply_to_message_id=reply_to_message_id
+                )
+        except Exception as e:
+            logging.warning(f"Outfit auto-fetch omitted/failed for uid {uid}: {e}")
+
+    except Exception as e:
+        logging.error(f"Info execution critical error: {e}")
+        safe_edit_message(f"❌ Internal System Error: {str(e)}", chat_id, processing.message_id)
+
+
+def execute_outfit_search(chat_id, uid, reply_to_message_id=None):
+    """আউটফিট খোঁজার মূল প্রসেс"""
+    processing = bot.send_message(chat_id, f"⏳ Rendering player avatar cosmetics for UID {uid}...", reply_to_message_id=reply_to_message_id)
+    try:
+        outfit_url = OUTFIT_API.format(uid=uid)
+        response = requests.get(outfit_url, timeout=30)
+
+        if response.status_code != 200:
+            safe_edit_message("❌ Custom skin compilation failed or asset server offline.", chat_id, processing.message_id)
+            return
+
+        photo = BytesIO(response.content)
+        photo.name = "outfit.png"
+
+        safe_delete_message(chat_id, processing.message_id)
+        bot.send_photo(
+            chat_id,
+            photo,
+            caption=f"👕 Outfit Preview Model\n🆔 UID Account Reference: {uid}",
+            reply_to_message_id=reply_to_message_id
+        )
+
+    except Exception as e:
+        logging.error(f"Outfit execution error: {e}")
+        safe_edit_message(f"❌ Execution Fault: {str(e)}", chat_id, processing.message_id)
+
+
 # ================= START COMMAND =================
 @bot.message_handler(commands=['start'])
 def start_command(message):
@@ -214,22 +337,23 @@ def start_command(message):
         welcome_text = f"""
 ✨ WELCOME {user_name.upper()} ✨
 
-🤖 DEVELOPER HABIB 69 FF INFO BOT
-👨‍💻 Owner: Developer Habib 69 | 🛡️ Support: @DeveloperHabib69
+🤖 Free Fire ID INFO BOT
+👨‍💻 Owner: Developer Habib 69
+🛡️ Support: @DeveloperHabib69
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 📌 QUICK COMMAND
 
-🚀 Use `/info <UID>` to fetch data.
+🚀 Use /info Your_UID
 
 📝 Example:
-`/info 9097982134`
+/info 9032419789
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 Get Real-time Free Fire Player Statistics & Outfits!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
+🎯 Get Real-time Free Fire Player Statistics
+━━━━━━━━━━━━━━━━━━━━━
 
-💡 Need help? Type /help anytime.
+💡 Use /help for more commands
 """
         try:
             image_response = requests.get(WELCOME_IMAGE, timeout=15)
@@ -253,25 +377,24 @@ def start_command(message):
 @bot.message_handler(commands=['help'])
 def help_command(message):
     text = """
-📖 BOT COMMAND GUIDE
+📖 COMMAND GUIDE
 
-⚡ /info <uid> - Fetch comprehensive player stats
-👕 /outfit <uid> - Get an instant outfit preview avatar
-🔄 /start - Relaunch welcome dashboard
-❓ /help - Open this documentation guide
+/info <uid> - Get player info
+/outfit <uid> - Get outfit image
+/start - Welcome message
+/help - Show this guide
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 EXTRACTED DATA INCLUDES:
+━━━━━━━━━━━━━━━━━━━━━
+📊 WHAT YOU GET
 
-✅ Basic Profile & Account Age
-✅ Current Rank Tiers (BR & CS Modes)
-✅ Active Clan Info & Leader Details
-✅ Pet Equipped Stats
-✅ Custom Bio Signatures
-✅ Real-time Credit Score & Diamond History
-✅ Virtual Outfit Rendering
+✅ Player Basic Info
+✅ Rank Details (BR & CS)
+✅ Clan Information
+✅ Pet Details
+✅ Social Information
+✅ Account Timeline
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 💻 Maintained by: Developer Habib 69
 🛡️ Tech Support: @DeveloperHabib69
 """
@@ -291,51 +414,20 @@ def info_command(message):
         bot.reply_to(message, "❌ Access Denied! UID must contain numbers only.")
         return
 
-    processing = bot.reply_to(message, f"⏳ Accessing database... Fetching profile for UID {uid}...")
+    # 🛑 FORCE JOIN CHECK
+    user_id = message.from_user.id
+    if not is_user_joined(user_id):
+        markup = get_join_keyboard(uid, "info")
+        bot.reply_to(
+            message, 
+            "⚠️ **Access Denied!**\n\nআমাদের বটের এই সার্ভিসটি গ্রুপে সম্পূর্ণ ফ্রিতে ব্যবহার করতে হলে নিচে দেওয়া আমাদের ২টি চ্যানেলে অবশ্যই জয়েন থাকতে হবে। জয়েন করার পর **VERIFY** বাটনে ক্লিক করুন।", 
+            parse_mode="Markdown", 
+            reply_markup=markup
+        )
+        return
 
-    try:
-        url = INFO_API.format(uid=uid)
-        response = requests.get(url, timeout=30)
-
-        if response.status_code != 200:
-            safe_edit_message("❌ Database API error. Please try again in a few moments.", message.chat.id, processing.message_id)
-            return
-
-        try:
-            data = response.json()
-        except ValueError:
-            safe_edit_message("❌ API parsed empty or invalid json structural response.", message.chat.id, processing.message_id)
-            return
-
-        if not isinstance(data, dict) or "basicInfo" not in data:
-            safe_edit_message("❌ Player ID not found. Verify the Free Fire UID and re-try.", message.chat.id, processing.message_id)
-            return
-
-        formatted_text = format_player_info(data, uid)
-
-        safe_delete_message(message.chat.id, processing.message_id)
-        send_long_message(message.chat.id, formatted_text, reply_to_message_id=message.message_id)
-
-        try:
-            outfit_url = OUTFIT_API.format(uid=uid)
-            outfit_response = requests.get(outfit_url, timeout=30)
-
-            if outfit_response.status_code == 200:
-                photo = BytesIO(outfit_response.content)
-                photo.name = "outfit.png"
-                nickname = (data.get("basicInfo") or {}).get("nickname", "Unknown")
-                bot.send_photo(
-                    message.chat.id,
-                    photo,
-                    caption=f"👕 Outfit Rendered\n🎮 {nickname} | 🆔 {uid}",
-                    reply_to_message_id=message.message_id
-                )
-        except Exception as e:
-            logging.warning(f"Outfit auto-fetch omitted/failed for uid {uid}: {e}")
-
-    except Exception as e:
-        logging.error(f"Info command critical error: {e}")
-        safe_edit_message(f"❌ Internal System Error: {str(e)}", message.chat.id, processing.message_id)
+    # জয়েন থাকলে ডিরেক্ট রান হবে
+    execute_info_search(message.chat.id, user_id, uid, reply_to_message_id=message.message_id)
 
 
 # ================= OUTFIT COMMAND =================
@@ -351,40 +443,57 @@ def outfit_command(message):
         bot.reply_to(message, "❌ Access Denied! UID must contain numbers only.")
         return
 
-    processing = bot.reply_to(message, f"⏳ Rendering player avatar cosmetics for UID {uid}...")
-
-    try:
-        outfit_url = OUTFIT_API.format(uid=uid)
-        response = requests.get(outfit_url, timeout=30)
-
-        if response.status_code != 200:
-            safe_edit_message("❌ Custom skin compilation failed or asset server offline.", message.chat.id, processing.message_id)
-            return
-
-        photo = BytesIO(response.content)
-        photo.name = "outfit.png"
-
-        safe_delete_message(message.chat.id, processing.message_id)
-        bot.send_photo(
-            message.chat.id,
-            photo,
-            caption=f"👕 Outfit Preview Model\n🆔 UID Account Reference: {uid}",
-            reply_to_message_id=message.message_id
+    # 🛑 FORCE JOIN CHECK
+    user_id = message.from_user.id
+    if not is_user_joined(user_id):
+        markup = get_join_keyboard(uid, "outfit")
+        bot.reply_to(
+            message, 
+            "⚠️ **Access Denied!**\n\nআমাদের বটের এই সার্ভিসটি গ্রুপে সম্পূর্ণ ফ্রিতে ব্যবহার করতে হলে নিচে দেওয়া আমাদের ২টি চ্যানেলে অবশ্যই জয়েন থাকতে হবে। জয়েন করার পর **VERIFY** বাটনে ক্লিক করুন।", 
+            parse_mode="Markdown", 
+            reply_markup=markup
         )
+        return
 
-    except Exception as e:
-        logging.error(f"Outfit interface error: {e}")
-        safe_edit_message(f"❌ Execution Fault: {str(e)}", message.chat.id, processing.message_id)
+    # জয়েন থাকলে ডিরেক্ট রান হবে
+    execute_outfit_search(message.chat.id, uid, reply_to_message_id=message.message_id)
+
+
+# ================= CALLBACK QUERY HANDLER (VERIFY BUTTON) =================
+@bot.callback_query_handler(func=lambda call: call.data.startswith('verify_'))
+def verify_callback(call):
+    user_id = call.from_user.id
+    
+    # ডাটা স্প্লিট করা (verify_commandType_uid)
+    _, command_type, uid = call.data.split('_')
+    
+    # আবার চেক করুন ইউজার জয়েন করেছে কিনা
+    if is_user_joined(user_id):
+        # ১. জয়েন করলে প্রথমে বটের দেওয়া বাটনওয়ালা নোটিশ মেসেজটি ডিলিট করে দেবে
+        safe_delete_message(call.message.chat.id, call.message.message_id)
+        
+        # টেলিগ্রামে অ্যালার্ট শো করবে যে ভেরিফিকেশন সফল
+        bot.answer_callback_query(call.id, "✅ Verification Successful! Fetching data...", show_alert=False)
+        
+        # ২. এরপর অটোমেটিক মূল ইনফো বা আউটফিট দেওয়া শুরু করবে
+        if command_type == "info":
+            execute_info_search(call.message.chat.id, user_id, uid, reply_to_message_id=call.message.reply_to_message.message_id if call.message.reply_to_message else None)
+        elif command_type == "outfit":
+            execute_outfit_search(call.message.chat.id, uid, reply_to_message_id=call.message.reply_to_message.message_id if call.message.reply_to_message else None)
+            
+    else:
+        # জয়েন না করে চাপ দিলে নোটিফিকেশন অ্যালার্ট পপ-আপ আসবে
+        bot.answer_callback_query(call.id, "❌ আপনি এখনও সব চ্যানেলে জয়েন করেননি! দয়া করে দুটি চ্যানেলেই জয়েন করে আবার ট্রাই করুন।", show_alert=True)
 
 
 # ================= MAIN RUNNER =================
 if __name__ == "__main__":
     print("=" * 50)
     print("🤖 DEVELOPER HABIB 69 PLAYER INFO BOT SYSTEM")
-    print("💻 Dev Studio: Developer Habib 69")
+    print("💻 Studio: Developer Habib 69")
     print("🛡️ Contact: @DeveloperHabib69")
     print("=" * 50)
-    print("🤖 Bot Engine Deployment Active...")
+    print("🤖 Bot Engine Deployment Active with Force Join...")
     print("=" * 50)
 
     try:
