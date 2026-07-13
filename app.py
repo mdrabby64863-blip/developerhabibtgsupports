@@ -18,7 +18,6 @@ CHANNEL_2_LINK = "https://t.me/asdasdsa11c"  # বাটন ২ এর লিঙ
 
 # ========= API LINKS =========
 INFO_API = "https://nirob-x-info.vercel.app/info?uid={uid}"
-OUTFIT_API = "https://nirob-free-fire-outfit.vercel.app/get?uid={uid}"
 WELCOME_IMAGE = "https://freeimage.host/i/C07A0Cu"
 
 TELEGRAM_MAX_LEN = 4096
@@ -29,13 +28,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # ========= CHECK JOIN FUNCTION =========
 def is_user_joined(user_id):
-    """ইউজার দুটি চ্যানেলে জয়েন আছে কিনা চেক করার ফাংশন"""
+    """ইউজার দুটি চ্যানেলে জয়েন আছে কিনা চেক করার ফাংশন"""
     try:
         # চ্যানেল ১ চেক
         member1 = bot.get_chat_member(CHANNEL_1_ID, user_id)
         # চ্যানেল ২ চেক
         member2 = bot.get_chat_member(CHANNEL_2_ID, user_id)
-        
+
         # লেফট, কিকড বা রেস্ট্রিক্টেড না হলে সে মেম্বার
         valid_statuses = ['member', 'administrator', 'creator']
         if member1.status in valid_statuses and member2.status in valid_statuses:
@@ -43,26 +42,26 @@ def is_user_joined(user_id):
         return False
     except Exception as e:
         logging.error(f"Error checking channel membership: {e}")
-        # বট অ্যাডমিন না থাকলে বা কোনো সমস্যা হলে সেফ সাইড হিসেবে True রিটার্ন করতে পারেন, 
+        # বট অ্যাডমিন না থাকলে বা কোনো সমস্যা হলে সেফ সাইড হিসেবে True রিটার্ন করতে পারেন,
         # তবে সঠিকভাবে সেটআপ করলে এটি ঠিকঠাক কাজ করবে।
         return False
 
 
 # ========= FORCE JOIN KEYBOARD =========
 def get_join_keyboard(uid, command_type="info"):
-    """ইউজার জয়েন না থাকলে ২টা চ্যানেল এবং ১টা ভেরিফাই বাটন শো করার কিবোর্ড"""
+    """ইউজার জয়েন না থাকলে ২টা চ্যানেল এবং ১টা ভেরিফাই বাটন শো করার কিবোর্ড"""
     markup = InlineKeyboardMarkup(row_width=2)
-    
-    # প্রথম লাইনে ২টি চ্যানেলের বাটন পাশাপাশি (আপনার দেওয়া ছবির মতো)
+
+    # প্রথম লাইনে ২টি চ্যানেলের বাটন পাশাপাশি (আপনার দেওয়া ছবির মতো)
     btn1 = InlineKeyboardButton("📢 JOIN GROUP 1", url=CHANNEL_1_LINK)
     btn2 = InlineKeyboardButton("📢 JOIN GROUP 2", url=CHANNEL_2_LINK)
     markup.row(btn1, btn2)
-    
-    # দ্বিতীয় লাইনে বড় ভেরিফাই বাটন (Callback Data সহ যাতে পরে চেক করা যায়)
+
+    # দ্বিতীয় লাইনে বড় ভেরিফাই বাটন (Callback Data সহ যাতে পরে চেক করা যায়)
     # ডাটা ফরম্যাট: verify_কমান্ড_ইউআইডি
     verify_btn = InlineKeyboardButton("✅ VERIFY", callback_data=f"verify_{command_type}_{uid}")
     markup.row(verify_btn)
-    
+
     return markup
 
 
@@ -130,9 +129,7 @@ def format_player_info(data, uid):
     nickname = safe_str(basic.get('nickname'))
 
     text = f"""
-╔═════════════════════╗
-║  PLAYER INFORMATION ║
-╚═════════════════════╝
+🎮 PLAYER INFORMATION 🎮
 
 👤 BASIC PROFILE
 ├─ Nickname: {nickname}
@@ -206,10 +203,8 @@ def format_player_info(data, uid):
 ├─ Last Login Time: {convert_time(basic.get('lastLoginAt'))}
 └─ History Period End: {convert_time(credit.get('periodicSummaryEndTime'))}
 
-╔═════════════════════════════╗
-║ Build : Developer Habib 69  ║
-║ Support : @DeveloperHabib69 ║
-╚═════════════════════════════╝
+Build : Developer Habib 69
+Support : @DeveloperHabib69
 """
     return text
 
@@ -279,53 +274,9 @@ def execute_info_search(chat_id, user_id, uid, reply_to_message_id=None):
         safe_delete_message(chat_id, processing.message_id)
         send_long_message(chat_id, formatted_text, reply_to_message_id=reply_to_message_id)
 
-        try:
-            outfit_url = OUTFIT_API.format(uid=uid)
-            outfit_response = requests.get(outfit_url, timeout=30)
-
-            if outfit_response.status_code == 200:
-                photo = BytesIO(outfit_response.content)
-                photo.name = "outfit.png"
-                nickname = (data.get("basicInfo") or {}).get("nickname", "Unknown")
-                bot.send_photo(
-                    chat_id,
-                    photo,
-                    caption=f"👕 Outfit Rendered\n🎮 {nickname} | 🆔 {uid}",
-                    reply_to_message_id=reply_to_message_id
-                )
-        except Exception as e:
-            logging.warning(f"Outfit auto-fetch omitted/failed for uid {uid}: {e}")
-
     except Exception as e:
         logging.error(f"Info execution critical error: {e}")
         safe_edit_message(f"❌ Internal System Error: {str(e)}", chat_id, processing.message_id)
-
-
-def execute_outfit_search(chat_id, uid, reply_to_message_id=None):
-    """আউটফিট খোঁজার মূল প্রসেс"""
-    processing = bot.send_message(chat_id, f"⏳ Rendering player avatar cosmetics for UID {uid}...", reply_to_message_id=reply_to_message_id)
-    try:
-        outfit_url = OUTFIT_API.format(uid=uid)
-        response = requests.get(outfit_url, timeout=30)
-
-        if response.status_code != 200:
-            safe_edit_message("❌ Custom skin compilation failed or asset server offline.", chat_id, processing.message_id)
-            return
-
-        photo = BytesIO(response.content)
-        photo.name = "outfit.png"
-
-        safe_delete_message(chat_id, processing.message_id)
-        bot.send_photo(
-            chat_id,
-            photo,
-            caption=f"👕 Outfit Preview Model\n🆔 UID Account Reference: {uid}",
-            reply_to_message_id=reply_to_message_id
-        )
-
-    except Exception as e:
-        logging.error(f"Outfit execution error: {e}")
-        safe_edit_message(f"❌ Execution Fault: {str(e)}", chat_id, processing.message_id)
 
 
 # ================= START COMMAND =================
@@ -380,7 +331,6 @@ def help_command(message):
 📖 COMMAND GUIDE
 
 /info <uid> - Get player info
-/outfit <uid> - Get outfit image
 /start - Welcome message
 /help - Show this guide
 
@@ -419,71 +369,40 @@ def info_command(message):
     if not is_user_joined(user_id):
         markup = get_join_keyboard(uid, "info")
         bot.reply_to(
-            message, 
-            "⚠️ **Access Denied!**\n\nআমাদের বটের এই সার্ভিসটি গ্রুপে সম্পূর্ণ ফ্রিতে ব্যবহার করতে হলে নিচে দেওয়া আমাদের ২টি চ্যানেলে অবশ্যই জয়েন থাকতে হবে। জয়েন করার পর **VERIFY** বাটনে ক্লিক করুন।", 
-            parse_mode="Markdown", 
+            message,
+            "⚠️ **Access Denied!**\n\nআমাদের বটের এই সার্ভিসটি গ্রুপে সম্পূর্ণ ফ্রিতে ব্যবহার করতে হলে নিচে দেওয়া আমাদের ২টি চ্যানেলে অবশ্যই জয়েন থাকতে হবে। জয়েন করার পর **VERIFY** বাটনে ক্লিক করুন।",
+            parse_mode="Markdown",
             reply_markup=markup
         )
         return
 
-    # জয়েন থাকলে ডিরেক্ট রান হবে
+    # জয়েন থাকলে ডিরেক্ট রান হবে
     execute_info_search(message.chat.id, user_id, uid, reply_to_message_id=message.message_id)
-
-
-# ================= OUTFIT COMMAND =================
-@bot.message_handler(commands=['outfit'])
-def outfit_command(message):
-    parts = message.text.split()
-    if len(parts) < 2:
-        bot.reply_to(message, "❌ Syntax Error!\nUse: `/outfit <UID>`\nExample: `/outfit 9097982134`")
-        return
-
-    uid = parts[1].strip()
-    if not uid.isdigit():
-        bot.reply_to(message, "❌ Access Denied! UID must contain numbers only.")
-        return
-
-    # 🛑 FORCE JOIN CHECK
-    user_id = message.from_user.id
-    if not is_user_joined(user_id):
-        markup = get_join_keyboard(uid, "outfit")
-        bot.reply_to(
-            message, 
-            "⚠️ **Access Denied!**\n\nআমাদের বটের এই সার্ভিসটি গ্রুপে সম্পূর্ণ ফ্রিতে ব্যবহার করতে হলে নিচে দেওয়া আমাদের ২টি চ্যানেলে অবশ্যই জয়েন থাকতে হবে। জয়েন করার পর **VERIFY** বাটনে ক্লিক করুন।", 
-            parse_mode="Markdown", 
-            reply_markup=markup
-        )
-        return
-
-    # জয়েন থাকলে ডিরেক্ট রান হবে
-    execute_outfit_search(message.chat.id, uid, reply_to_message_id=message.message_id)
 
 
 # ================= CALLBACK QUERY HANDLER (VERIFY BUTTON) =================
 @bot.callback_query_handler(func=lambda call: call.data.startswith('verify_'))
 def verify_callback(call):
     user_id = call.from_user.id
-    
+
     # ডাটা স্প্লিট করা (verify_commandType_uid)
     _, command_type, uid = call.data.split('_')
-    
-    # আবার চেক করুন ইউজার জয়েন করেছে কিনা
+
+    # আবার চেক করুন ইউজার জয়েন করেছে কিনা
     if is_user_joined(user_id):
-        # ১. জয়েন করলে প্রথমে বটের দেওয়া বাটনওয়ালা নোটিশ মেসেজটি ডিলিট করে দেবে
+        # ১. জয়েন করলে প্রথমে বটের দেওয়া বাটনওয়ালা নোটিশ মেসেজটি ডিলিট করে দেবে
         safe_delete_message(call.message.chat.id, call.message.message_id)
-        
+
         # টেলিগ্রামে অ্যালার্ট শো করবে যে ভেরিফিকেশন সফল
         bot.answer_callback_query(call.id, "✅ Verification Successful! Fetching data...", show_alert=False)
-        
-        # ২. এরপর অটোমেটিক মূল ইনফো বা আউটফিট দেওয়া শুরু করবে
+
+        # ২. এরপর অটোমেটিক মূল ইনফো দেওয়া শুরু করবে
         if command_type == "info":
             execute_info_search(call.message.chat.id, user_id, uid, reply_to_message_id=call.message.reply_to_message.message_id if call.message.reply_to_message else None)
-        elif command_type == "outfit":
-            execute_outfit_search(call.message.chat.id, uid, reply_to_message_id=call.message.reply_to_message.message_id if call.message.reply_to_message else None)
-            
+
     else:
-        # জয়েন না করে চাপ দিলে নোটিফিকেশন অ্যালার্ট পপ-আপ আসবে
-        bot.answer_callback_query(call.id, "❌ আপনি এখনও সব চ্যানেলে জয়েন করেননি! দয়া করে দুটি চ্যানেলেই জয়েন করে আবার ট্রাই করুন।", show_alert=True)
+        # জয়েন না করে চাপ দিলে নোটিফিকেশন অ্যালার্ট পপ-আপ আসবে
+        bot.answer_callback_query(call.id, "❌ আপনি এখনও সব চ্যানেলে জয়েন করেননি! দয়া করে দুটি চ্যানেলেই জয়েন করে আবার ট্রাই করুন।", show_alert=True)
 
 
 # ================= MAIN RUNNER =================
