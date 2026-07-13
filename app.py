@@ -5,7 +5,7 @@ from io import BytesIO
 import logging
 
 # ================= CONFIG =================
-BOT_TOKEN = "8830079878:AAH0lM-61gh5enX3Q-hsBD8fZSZ6S-kybPg"  # ⚠️ See  at bottom of chat — regenerate this token via @BotFather since it was shared in plain text.
+BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ See  at bottom of chat — regenerate this token via @BotFather since it was shared in plain text.
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # ========= API LINKS =========
