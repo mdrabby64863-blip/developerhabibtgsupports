@@ -143,7 +143,6 @@ def format_player_info(data, uid):
 ├─ Game Version: {safe_str(basic.get('releaseVersion'), 'OB')}
 └─ Created At: {convert_time(basic.get('createAt'))}
 
-━━━━━━━━━━━━━━━━━━━━━
 🏆 RANK STATUS
 ├─ BR Rank: {br_rank} (Code: {safe_str(basic.get('rank'))})
 ├─ BR Rank Points: {basic.get('rankingPoints', 0) or 0:,}
@@ -152,7 +151,6 @@ def format_player_info(data, uid):
 ├─ CS Rank Points: {basic.get('csRankingPoints', 0) or 0:,}
 └─ Max CS Rank: {safe_str(basic.get('csMaxRank'))}
 
-━━━━━━━━━━━━━━━━━━━━━
 🧩 CUSTOMIZATION & ITEMS
 ├─ Avatar ID: {safe_str(profile.get('avatarId'))}
 ├─ Banner ID: {safe_str(basic.get('bannerId'))}
@@ -168,7 +166,6 @@ def format_player_info(data, uid):
 ├─ Weapon Skins: {', '.join(map(str, weapons)) if weapons else 'None'}
 └─ Outfits (IDs): {', '.join(map(str, clothes)) if clothes else 'None'}
 
-━━━━━━━━━━━━━━━━━━━━━
 🏰 CLAN DETAILS
 ├─ Clan Name: {safe_str(clan.get('clanName'), 'No Clan')}
 ├─ Clan ID: {safe_str(clan.get('clanId'))}
@@ -180,7 +177,6 @@ def format_player_info(data, uid):
 ├─ Leader Likes: {captain.get('liked', 0) or 0:,}
 └─ Leader Region: {safe_str(captain.get('region'))}
 
-━━━━━━━━━━━━━━━━━━━━━
 🐾 COMPANION (PET)
 ├─ Pet ID: {safe_str(pet.get('id'))}
 ├─ Pet Level: {safe_str(pet.get('level'))}
@@ -189,14 +185,12 @@ def format_player_info(data, uid):
 ├─ Selected Skill: {safe_str(pet.get('selectedSkillId'))}
 └─ Is Equipped: {'Yes' if pet.get('isSelected') else 'No'}
 
-━━━━━━━━━━━━━━━━━━━━━
 💬 SOCIAL PROFILE
 ├─ Bio Language: {safe_replace(social.get('language'), 'Language_', 'EN')}
 ├─ Active Time: {safe_replace(social.get('timeActive'), 'TimeActive_', 'DAY')}
 ├─ Signature: {safe_str(social.get('signature'), 'No Signature')}
 └─ Pref. Rank Mode: {safe_replace(social.get('rankShow'), 'RankShow_', 'BR')}
 
-━━━━━━━━━━━━━━━━━━━━━
 💰 SYSTEM ECONOMY & TIMELINE
 ├─ Credit Score: {safe_str(credit.get('creditScore'), '100')}/100
 ├─ Est. Diamond Cost: {safe_str(diamond.get('diamondCost'))} 💎
@@ -292,7 +286,6 @@ def start_command(message):
 👨‍💻 Owner: Developer Habib 69
 🛡️ Support: @DeveloperHabib69
 
-━━━━━━━━━━━━━━━━━━━━━
 📌 QUICK COMMAND
 
 🚀 Use /info Your_UID
@@ -300,9 +293,7 @@ def start_command(message):
 📝 Example:
 /info 9032419789
 
-━━━━━━━━━━━━━━━━━━━━━
 🎯 Get Real-time Free Fire Player Statistics
-━━━━━━━━━━━━━━━━━━━━━
 
 💡 Use /help for more commands
 """
@@ -334,7 +325,6 @@ def help_command(message):
 /start - Welcome message
 /help - Show this guide
 
-━━━━━━━━━━━━━━━━━━━━━
 📊 WHAT YOU GET
 
 ✅ Player Basic Info
@@ -344,7 +334,6 @@ def help_command(message):
 ✅ Social Information
 ✅ Account Timeline
 
-━━━━━━━━━━━━━━━━━━━━━
 💻 Maintained by: Developer Habib 69
 🛡️ Tech Support: @DeveloperHabib69
 """
