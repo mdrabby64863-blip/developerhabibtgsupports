@@ -6,7 +6,7 @@ import logging
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # ================= CONFIG =================
-BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ Token shared in plain text
+BOT_TOKEN = "8912601476:AAE56aH200wB33P9axLxOy5_NtgteQ3ladM"  # ⚠️ Token shared in plain text
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # 📢 FORCE JOIN CHANNELS CONFIG (এখানে আপনার চ্যানেল/গ্রুপের আইডি বা ইউজারনেম দিন)
