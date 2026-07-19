@@ -10,11 +10,11 @@ BOT_TOKEN = "8912601476:AAGeeTnJx498Xd5MP1hVrYpFkEszIG84BIM"  # ⚠️ Token sha
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # 📢 FORCE JOIN CHANNELS CONFIG (এখানে আপনার চ্যানেল/গ্রুপের আইডি বা ইউজারনেম দিন)
-CHANNEL_1_ID = "@TestAdminBotS"   # উদাহরণ: "@my_main_channel" অথবা ID -100xxxxxxxxx
-CHANNEL_2_ID = "@asdasdsa11c"   # উদাহরণ: "@my_sub_channel" অথবা ID -100xxxxxxxxx
+CHANNEL_1_ID = "@FreeFireCommunityBangladesh"   # উদাহরণ: "@my_main_channel" অথবা ID -100xxxxxxxxx
+CHANNEL_2_ID = "@DeveloperHabibX69"   # উদাহরণ: "@my_sub_channel" অথবা ID -100xxxxxxxxx
 
-CHANNEL_1_LINK = "https://t.me/TestAdminBotS"  # বাটন ১ এর লিঙ্ক
-CHANNEL_2_LINK = "https://t.me/asdasdsa11c"  # বাটন ২ এর লিঙ্ক
+CHANNEL_1_LINK = "https://t.me/FreeFireCommunityBangladesh"  # বাটন ১ এর লিঙ্ক
+CHANNEL_2_LINK = "https://t.me/DeveloperHabibX69"  # বাটন ২ এর লিঙ্ক
 
 # ========= API LINKS =========
 INFO_API = "https://nirob-x-info.vercel.app/info?uid={uid}"
