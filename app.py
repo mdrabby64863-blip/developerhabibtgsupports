@@ -247,16 +247,16 @@ def execute_info_search(chat_id, user_id, uid, reply_to_message_id=None):
     processing = bot.send_message(chat_id, f"⏳ Accessing database... Fetching profile for UID {uid}...", reply_to_message_id=reply_to_message_id)
     try:
         url = INFO_API.format(uid=uid)
-        response = requests.get(url, timeout=30)
+        response = requests.get(url, timeout=15)  # টাইমআউট ১৫ সেকেন্ডে কমিয়ে দিলাম যাতে দ্রুত এরর মেসেজ দেয়
 
         if response.status_code != 200:
-            safe_edit_message("❌ Database API error. Please try again in a few moments.", chat_id, processing.message_id)
+            safe_edit_message("⚠️ নেটওয়ার্ক সমস্যা, অনুগ্রহ করে ৩০ সেকেন্ড পর আবার চেষ্টা করুন।", chat_id, processing.message_id)
             return
 
         try:
             data = response.json()
         except ValueError:
-            safe_edit_message("❌ API parsed empty or invalid json structural response.", chat_id, processing.message_id)
+            safe_edit_message("⚠️ নেটওয়ার্ক সমস্যা, অনুগ্রহ করে ৩০ সেকেন্ড পর আবার চেষ্টা করুন।", chat_id, processing.message_id)
             return
 
         if not isinstance(data, dict) or "basicInfo" not in data:
@@ -268,9 +268,11 @@ def execute_info_search(chat_id, user_id, uid, reply_to_message_id=None):
         safe_delete_message(chat_id, processing.message_id)
         send_long_message(chat_id, formatted_text, reply_to_message_id=reply_to_message_id)
 
+    except requests.exceptions.Timeout:
+        safe_edit_message("⚠️ নেটওয়ার্ক সমস্যা, অনুগ্রহ করে ৩০ সেকেন্ড পর আবার চেষ্টা করুন।", chat_id, processing.message_id)
     except Exception as e:
-        logging.error(f"Info execution critical error: {e}")
-        safe_edit_message(f"❌ Internal System Error: {str(e)}", chat_id, processing.message_id)
+        logging.error(f"Info execution error: {e}")
+        safe_edit_message("⚠️ নেটওয়ার্ক সমস্যা, অনুগ্রহ করে ৩০ সেকেন্ড পর আবার চেষ্টা করুন।", chat_id, processing.message_id)
 
 
 # ================= START COMMAND =================
@@ -405,6 +407,7 @@ if __name__ == "__main__":
     print("=" * 50)
 
     try:
-        bot.infinity_polling()
+        bot.remove_webhook()
+        bot.infinity_polling(none_stop=True)
     except Exception as e:
         print(f"❌ Polling Crash: {e}")
